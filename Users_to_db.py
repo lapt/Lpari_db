@@ -83,7 +83,7 @@ def insert_user_sql(connection, user):
 
     try:
         x = connection.cursor()
-        x.execute('INSERT INTO Users VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ', (id_user,
+        x.execute('INSERT INTO Users_table VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ', (id_user,
                                                                                    screen_name,
                                                                                    time_zone,
                                                                                    name,
@@ -193,6 +193,7 @@ def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
     number_users = count_users_neo(gdb_neo)
+
     for start in range(0, number_users, 50000):
         users = get_list_users_neo(gdb_neo, start)
         for user in users:
