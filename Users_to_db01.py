@@ -148,7 +148,7 @@ def insert_user_sql(connection, user):
                     return
                 ID_BAD = id_user
                 # hit rate limit, sleep for 15 minutes
-                print 'Rate limited. Dormir durante 15 minutos. ' + e.reason
+                print 'Rate limited. Dormir durante 15 minutos. ' + e.reason + 'id: ' + str(id_user)
                 time.sleep(15 * 60 + 15)
                 continue
         except StopIteration:
