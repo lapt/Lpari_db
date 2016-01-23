@@ -18,7 +18,7 @@ CONSUMER_SECRET = 'HB7aKDAHwBSinXnfU7hKvFUKTpESfMPFm3YKtOyViTw8md4rhl'
 # under "Your access token")
 ACCESS_TOKEN = '126471512-It4hiXQFV5ar8wYIj5GTObuwwfbrjblxOzUS98Ah'
 ACCESS_TOKEN_SECRET = '4g7tCdzP6ZvFm5hEPCi1oIvi45hepUAPWcqQX590a8BKG'
-
+STR = 0
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
@@ -352,7 +352,7 @@ def get_list_users_neo(gdb, start):
 def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
-    start = 0
+    start = STR
     users = get_list_users_neo(gdb_neo, start)
     for user in users:
         lost = len(get_id_lost_users_sql(gdb_sql, int(user[0].get('id'))))

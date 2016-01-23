@@ -351,7 +351,7 @@ def get_list_users_neo(gdb, start):
 def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
-    start = 0
+    start = STR
     users = get_list_users_neo(gdb_neo, start)
     for user in users:
         lost = len(get_id_lost_users_sql(gdb_sql, int(user[0].get('id'))))
