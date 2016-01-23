@@ -10,15 +10,15 @@ import time
 __author__ = 'luisangel'
 # The consumer keys can be found on your application's Details
 # page located at https://dev.twitter.com/apps (under "OAuth settings")
-CONSUMER_KEY = 'NKNCueURlcpitCRUwK0TngfLq'
-CONSUMER_SECRET = 'HB7aKDAHwBSinXnfU7hKvFUKTpESfMPFm3YKtOyViTw8md4rhl'
+CONSUMER_KEY = 'yDyQ2r8ygIYWG0nHqccMdYdZ1'
+CONSUMER_SECRET = '1AmCaMtC3XprLEwE7vhmSX6J0iCIe02kODXznfsbcp62mTvFo6'
 
 # The access tokens can be found on your applications's Details
 # page located at https://dev.twitter.com/apps (located
 # under "Your access token")
-ACCESS_TOKEN = '126471512-It4hiXQFV5ar8wYIj5GTObuwwfbrjblxOzUS98Ah'
-ACCESS_TOKEN_SECRET = '4g7tCdzP6ZvFm5hEPCi1oIvi45hepUAPWcqQX590a8BKG'
-
+ACCESS_TOKEN = '126471512-eNGOjOEbV1B3nzbz3oWX2S1OEvwioguEOmjiQW6I'
+ACCESS_TOKEN_SECRET = '1aniqa6EgGLjGyvnDoyUksnHoecBgirzzxoHWnswjKhBg'
+STR = 1242000
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
@@ -88,7 +88,7 @@ def get_users_sql(connection):
 def insert_lost_user(connection, id_user):
     try:
         x = connection.cursor()
-        x.execute('INSERT INTO Usuarios_db.LostUser VALUES (%s) ', (
+        x.execute('INSERT INTO LostUser VALUES (%s) ', (
             id_user,))
         connection.commit()
     except MySQLdb.DatabaseError, e:
@@ -216,7 +216,7 @@ def insert_user_sql(connection, user):
 
     try:
         x = connection.cursor()
-        x.execute('INSERT INTO ideal_db.Users_table VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ',
+        x.execute('INSERT INTO Users_table VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ',
                   (id_user,
                    screen_name,
                    time_zone,
@@ -255,12 +255,12 @@ def insert_user_sql(connection, user):
 
     try:
         x = connection.cursor()
-        x.execute('INSERT INTO ideal_db.User_location VALUES (%s,%s,%s,%s,%s) ', (id_user,
-                                                                                  user_location[0][0],
-                                                                                  user_location[0][1],
-                                                                                  user_location[0][2],
-                                                                                  user_location[0][3]
-                                                                                  ))
+        x.execute('INSERT INTO User_location VALUES (%s,%s,%s,%s,%s) ', (id_user,
+                                                                         user_location[0][0],
+                                                                         user_location[0][1],
+                                                                         user_location[0][2],
+                                                                         user_location[0][3]
+                                                                         ))
         connection.commit()
     except MySQLdb.DatabaseError, e:
         print 'Error %s' % e
@@ -269,7 +269,7 @@ def insert_user_sql(connection, user):
 
 def get_user_location(gdb_sql, city_name):
     query = "select country_code, region_code, longitude, latitude " \
-            "from geodict2.cities " \
+            "from cities " \
             "where city_name = %s and country_code = 'cl';"
     try:
         cursor = gdb_sql.cursor()
@@ -319,7 +319,7 @@ def count_users_neo(gdb_neo):
 
 
 def get_list_users_neo(gdb, start):
-    query = "MATCH (n:User) RETURN n skip {start} LIMIT 50000"  # Limit should same that range
+    query = "MATCH (n:User) RETURN n skip {start} LIMIT 54000"  # Limit should same that range
     param = {'start': start}
     results = gdb.query(query, params=param, data_contents=True)
     return results.rows
@@ -328,13 +328,13 @@ def get_list_users_neo(gdb, start):
 def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
-    number_users = count_users_neo(gdb_neo)
-
-    for start in range(0, number_users, 50000):
-        users = get_list_users_neo(gdb_neo, start)
-        for user in users:
-            insert_user_sql(gdb_sql, user[0])
-        print start
+    start = STR
+    users = get_list_users_neo(gdb_neo, start)
+    count = 0
+    for user in users:
+        insert_user_sql(gdb_sql, user[0])
+        count += 1
+        print "Insert " + str(count)
     gdb_sql.close()
     pass
 

@@ -319,7 +319,7 @@ def count_users_neo(gdb_neo):
 
 
 def get_list_users_neo(gdb, start):
-    query = "MATCH (n:User) RETURN n skip {start} LIMIT 50000"  # Limit should same that range
+    query = "MATCH (n:User) RETURN n skip {start} LIMIT 54000"  # Limit should same that range
     param = {'start': start}
     results = gdb.query(query, params=param, data_contents=True)
     return results.rows
@@ -328,13 +328,13 @@ def get_list_users_neo(gdb, start):
 def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
-    number_users = count_users_neo(gdb_neo)
-
-    for start in range(0, number_users, 50000):
-        users = get_list_users_neo(gdb_neo, start)
-        for user in users:
-            insert_user_sql(gdb_sql, user[0])
-        print start
+    start = 0
+    users = get_list_users_neo(gdb_neo, start)
+    count = 0
+    for user in users:
+        insert_user_sql(gdb_sql, user[0])
+        count += 1
+        print "Insert " + str(count)
     gdb_sql.close()
     pass
 
