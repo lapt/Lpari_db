@@ -70,11 +70,26 @@ def get_connection_sql():
         sys.exit(1)
 
 
-def get_users_sql(connection):
-    query = "SELECT idLostUser FROM LostUser ;"
+def get_id_lost_users_sql(connection, id_lost):
+    query = "SELECT idLostUser FROM Usuarios_db.LostUser WHERE idLostUser = %s;"
     try:
         cursor = connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, (id_lost, ))
+        data = cursor.fetchall()
+        if data is None:
+            return None
+        else:
+            return [x[0] for x in data]
+    except MySQLdb.Error:
+        print "Error: unable to fetch data"
+        return -1
+
+
+def get_id_user_sql(connection, id_user):
+    query = "SELECT idUser FROM ideal_db.Users_table WHERE idUser = %s;"
+    try:
+        cursor = connection.cursor()
+        cursor.execute(query, (id_user, ))
         data = cursor.fetchall()
         if data is None:
             return None
@@ -119,18 +134,18 @@ def insert_user_sql(connection, user):
                 cn = get_connection_sql()
                 insert_lost_user(cn, id_user)
                 cn.close()
-                break
+                return
             if e.message[0]['code'] == 63:
                 print 'Usuario suspendido:' + str(id_user)
                 cn = get_connection_sql()
                 insert_lost_user(cn, id_user)
                 cn.close()
-                break
+                return
             else:
                 global ID_BAD
                 if ID_BAD == id_user:
                     print "Id: %d durmio dos veces." % id_user
-                    break
+                    return
                 ID_BAD = id_user
                 # hit rate limit, sleep for 15 minutes
                 print 'Rate limited. Dormir durante 15 minutos. ' + e.reason
@@ -143,7 +158,7 @@ def insert_user_sql(connection, user):
         cn = get_connection_sql()
         insert_lost_user(cn, id_user)
         cn.close()
-        return None
+        return
     try:
         screen_name = u.screen_name
     except AttributeError:
@@ -239,6 +254,7 @@ def insert_user_sql(connection, user):
     except MySQLdb.DatabaseError, e:
         print 'Error %s' % e
         connection.rollback()
+        return
 
     region = user.get('region')
     region = unicode(region).encode('utf-8') if region is not None else ''
@@ -265,6 +281,8 @@ def insert_user_sql(connection, user):
     except MySQLdb.DatabaseError, e:
         print 'Error %s' % e
         connection.rollback()
+        return
+
 
 
 def get_user_location(gdb_sql, city_name):
@@ -330,11 +348,13 @@ def update_users():
     gdb_sql = get_connection_sql()
     start = 0
     users = get_list_users_neo(gdb_neo, start)
-    count = 0
     for user in users:
+        lost = len(get_id_lost_users_sql(gdb_sql, int(user[0].get('id'))))
+        user_exist = len(get_id_user_sql(gdb_sql, int(user[0].get('id'))))
+        if lost == 1 or user_exist == 1:
+            continue
         insert_user_sql(gdb_sql, user[0])
-        count += 1
-        print "Insert " + str(count)
+        print "Processed " + str(user[0].get('id'))
     gdb_sql.close()
     pass
 
@@ -347,8 +367,8 @@ def update_tweets():
 
 def test():
     con = get_connection_sql()
-    p = get_user_location(con, 'arica')
-    print p
+    p = get_id_lost_users_sql(con, 43748620)
+    print len(p)
 
 
 if __name__ == '__main__':
