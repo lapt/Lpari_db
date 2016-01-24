@@ -117,6 +117,7 @@ def insert_lost_user(connection, id_user):
 def get_new_api():
     global ID_KEY
     ID_KEY = 0 if ID_KEY >= 5 else ID_KEY + 1
+    print "New Key: " + str(ID_KEY)
     global auth
     auth = tweepy.OAuthHandler(KEYS[ID_KEY][0], KEYS[ID_KEY][1])
     auth.set_access_token(KEYS[ID_KEY][2], KEYS[ID_KEY][3])
