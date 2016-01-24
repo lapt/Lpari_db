@@ -80,7 +80,7 @@ def get_id_lost_users_sql(connection, id_lost):
         cursor.execute(query, (id_lost,))
         data = cursor.fetchall()
         if data is None:
-            return None
+            return []
         else:
             return [x[0] for x in data]
     except MySQLdb.Error:
@@ -95,7 +95,7 @@ def get_id_user_sql(connection, id_user):
         cursor.execute(query, (id_user,))
         data = cursor.fetchall()
         if data is None:
-            return None
+            return []
         else:
             return [x[0] for x in data]
     except MySQLdb.Error:
