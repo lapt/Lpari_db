@@ -8,19 +8,23 @@ import tweepy
 import time
 
 __author__ = 'luisangel'
-# The consumer keys can be found on your application's Details
-# page located at https://dev.twitter.com/apps (under "OAuth settings")
-CONSUMER_KEY = 'CdLbvHLjTAeaHnKoWhTqtV6US'
-CONSUMER_SECRET = 'fpPcGAma22pnXMGRsNLSoKCF8oKPl7R5SlncbTQqVuuNVQtJNb'
 
-# The access tokens can be found on your applications's Details
-# page located at https://dev.twitter.com/apps (located
-# under "Your access token")
-ACCESS_TOKEN = '126471512-ZHy14Tz4xWhFaNXoTOZDUBQ5D6NzyFc52ip9V0cB'
-ACCESS_TOKEN_SECRET = 'Zfis0GQbcitJI27MFrCe8Uqascqt2tD3AJC0wKIUSUgzv'
-STR = 162000
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+# CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+KEYS = [['pmsHi3fTyJrqQ6Ov0ANudX2jd', 'r1sIVRwLumaCJZenTrrQK4HdHaLn749dBeBfl4zx61DsvE3ySH',
+         '126471512-ld4Cn3Btt4Jbt3hJjXpJep7u9rDFzt8nX6MtxcMa', 'jVDKc4ZBpCfvkGSt7CO44s1mKzfUu4c96E8QNRm0Br80w'],
+        ['jDg9LNtVVgqBQnZ3TnyadcpvV', 'gKirPUeRfJvF9b8atUOYbVZt5N5XR4Mn0BALj3VAjkJMtZQbSf',
+         '126471512-XjsMgivyCmVgMq2QB6iQhKYnNPWT1dUklpsALZ6n', 'CdbLC9vh2d6xNjy6U5KV80DVoBHvlU2YzahuYg1QoXHWt'],
+        ['rN4pHBr2owpAxvtnNGuk89PkD', 'Ham1VLOqJo215Rr9Iczv0rJhFxZRXsOTjACStUtYFgsKntMghl',
+         '126471512-kIScTpVMqT5GDLKO089JVsEcwSniSEANCgahMBfw', 'YhixBt4m7d5kdp60HtaOTWeI6qjxjxo0qezL887pImz2h'],
+        ['QjBYJl9mapJBHrf3HJTYemHIi', 'UUaOitJpHZWAS026fbqzjAUWPsY8FJf5VvycCwDjXSqAIpheZY',
+         '126471512-4aJQ4pBXoE7ADoWqQ3Sms3SvaDCYhQlJEnjqQ2U5', 'ZBvbDXB1BAjh3zWnLZG7AW1QyHvaQAHHTF3iUoMRLdtFX'],
+        ['N0FOjQ0nM1aZE5J2x281ceCXC', '39T7HICkYlumTUIziQhP9gQaHATwUmmACeioe3xFN1DmqllFJP',
+         '126471512-sFqNbzR2CkAc1cbO7yb6z6SnnjEPNaP9xRLbATHx', 'FjbQ03CFFLlVQOhyzbn8Lx5Bxw4gCL9EyOghgS5t1zJnE']
+        ]
+ID_KEY = 0
+
+auth = tweepy.OAuthHandler(KEYS[ID_KEY][0], KEYS[ID_KEY][1])
+auth.set_access_token(KEYS[ID_KEY][2], KEYS[ID_KEY][3])
 api = tweepy.API(auth)
 ID_BAD = 0
 REGIONS = {'03': 'antofagasta',
@@ -74,7 +78,7 @@ def get_id_lost_users_sql(connection, id_lost):
     query = "SELECT idLostUser FROM LostUser WHERE idLostUser = %s;"
     try:
         cursor = connection.cursor()
-        cursor.execute(query, (id_lost, ))
+        cursor.execute(query, (id_lost,))
         data = cursor.fetchall()
         if data is None:
             return None
@@ -89,7 +93,7 @@ def get_id_user_sql(connection, id_user):
     query = "SELECT idUser FROM Users_table WHERE idUser = %s;"
     try:
         cursor = connection.cursor()
-        cursor.execute(query, (id_user, ))
+        cursor.execute(query, (id_user,))
         data = cursor.fetchall()
         if data is None:
             return None
@@ -109,6 +113,16 @@ def insert_lost_user(connection, id_user):
     except MySQLdb.DatabaseError, e:
         print 'Error %s' % e
         connection.rollback()
+
+
+def get_new_api():
+    global ID_KEY
+    ID_KEY = 0 if ID_KEY >= 5 else ID_KEY + 1
+    global auth
+    auth = tweepy.OAuthHandler(KEYS[ID_KEY][0], KEYS[ID_KEY][1])
+    auth.set_access_token(KEYS[ID_KEY][2], KEYS[ID_KEY][3])
+    global api
+    api = tweepy.API(auth)
 
 
 def insert_user_sql(connection, user):
@@ -155,7 +169,7 @@ def insert_user_sql(connection, user):
                 ID_BAD = id_user
                 # hit rate limit, sleep for 15 minutes
                 print 'Rate limited. Dormir durante 15 minutos. code: ' + ' id: ' + str(id_user)
-                time.sleep(15 * 60 + 15)
+                get_new_api()
                 continue
         except StopIteration:
             break
@@ -351,15 +365,15 @@ def get_list_users_neo(gdb, start):
 def update_users():
     gdb_neo = get_connection_neo()
     gdb_sql = get_connection_sql()
-    start = STR
-    users = get_list_users_neo(gdb_neo, start)
-    for user in users:
-        lost = len(get_id_lost_users_sql(gdb_sql, int(user[0].get('id'))))
-        user_exist = len(get_id_user_sql(gdb_sql, int(user[0].get('id'))))
-        if lost == 1 or user_exist == 1:
-            continue
-        insert_user_sql(gdb_sql, user[0])
-        print "Processed " + str(user[0].get('id'))
+    for start in [810000, 864000, 918000, 972000, 1026000]:
+        users = get_list_users_neo(gdb_neo, start)
+        for user in users:
+            lost = len(get_id_lost_users_sql(gdb_sql, int(user[0].get('id'))))
+            user_exist = len(get_id_user_sql(gdb_sql, int(user[0].get('id'))))
+            if lost == 1 or user_exist == 1:
+                continue
+            insert_user_sql(gdb_sql, user[0])
+            print "Processed " + str(user[0].get('id'))
     gdb_sql.close()
     pass
 
